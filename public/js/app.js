@@ -1977,6 +1977,15 @@ __webpack_require__.r(__webpack_exports__);
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 
 /* harmony default export */ __webpack_exports__["default"] = ({
@@ -1999,15 +2008,14 @@ __webpack_require__.r(__webpack_exports__);
     save: function save() {
       var _this = this;
 
-      //salva e edita caso ja seja um registro existente
+      //salva se não estiver id e edita caso ja seja um registro existente
       if (!this.cnpj.id) {
         _services_cnpj__WEBPACK_IMPORTED_MODULE_1__["default"].cadastrar(this.cnpj).then(function (response) {
           _this.cnpj = {};
 
           _this.list();
 
-          _this.alertaFlutuante("success"); // console.log('Cadastrado com sucesso');
-
+          _this.alertaFlutuante("success");
         });
       } else {
         _services_cnpj__WEBPACK_IMPORTED_MODULE_1__["default"].edit(this.cnpj).then(function (response) {
@@ -2015,7 +2023,7 @@ __webpack_require__.r(__webpack_exports__);
 
           _this.list();
 
-          alert("Atualizado com sucesso");
+          _this.alertaFlutuante("primary");
         });
       }
     },
@@ -2023,7 +2031,7 @@ __webpack_require__.r(__webpack_exports__);
       var _this2 = this;
 
       _services_cnpj__WEBPACK_IMPORTED_MODULE_1__["default"].listDb(this.cnpj).then(function (response) {
-        _this2.cnpjs = response.data; //salva em data
+        _this2.cnpjs = response.data; //retorna os resultados do banco de dados e coloca na tabela
       });
     },
     edit: function edit(cnpj) {
@@ -2035,9 +2043,10 @@ __webpack_require__.r(__webpack_exports__);
 
       if (confirm("Deseja Excluir mesmo esse registro?")) {
         _services_cnpj__WEBPACK_IMPORTED_MODULE_1__["default"].destroy(cnpj).then(function (response) {
-          _this3.list();
+          _this3.alertaFlutuante("warning");
 
-          console.log(_this3.cnpj);
+          _this3.list(); //atualiza a lista de cadastros
+
         });
       }
     },
@@ -2046,12 +2055,22 @@ __webpack_require__.r(__webpack_exports__);
 
       _services_cnpj__WEBPACK_IMPORTED_MODULE_1__["default"].buscar(this.cnpj).then(function (response) {
         _this4.cnpj = response.data;
-        console.log(_this4.cnpjTeste);
+
+        if (_this4.cnpj = response.data.message == "CNPJ inválido") {
+          _this4.alertaFlutuante("erro-cnpj");
+
+          _this4.cnpj = {};
+        } else {
+          _this4.alertaFlutuante("cnpj-valido");
+
+          _this4.cnpj = response.data;
+        }
       });
     },
     alertaFlutuante: function alertaFlutuante() {
       var variant = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
+      //Verifica o parametro e assim sua correspondente mensagem
       //começa a variavel como vazia
       if (variant == "success") {
         //compara os parametros passados
@@ -2066,11 +2085,38 @@ __webpack_require__.r(__webpack_exports__);
           variant: variant,
           solid: true
         });
+      } else if (variant == "warning") {
+        this.$bvToast.toast("Cadastro excluido com sucesso", {
+          title: "CNPJ excluido da base de dados",
+          variant: variant,
+          solid: true
+        });
+      } else if (variant == "primary") {
+        this.$bvToast.toast("Cadastro atualizado com sucesso", {
+          title: "Dados atualizados",
+          variant: variant,
+          solid: true
+        });
+      } else if (variant == "erro-cnpj") {
+        variant = "danger";
+        this.$bvToast.toast("Cnpj inválido", {
+          title: "Dados incorretos ou inválidos",
+          variant: variant,
+          solid: true
+        });
+      } else if (variant == "cnpj-valido") {
+        variant = "info";
+        this.$bvToast.toast("Cnpj válido", {
+          title: "Cnpj encontrado e cadastrado na receita",
+          variant: variant,
+          solid: true
+        });
       }
     }
   },
   mounted: function mounted() {
     this.list();
+    console.log(_services_cnpj__WEBPACK_IMPORTED_MODULE_1__["default"]);
   }
 });
 
@@ -42640,7 +42686,7 @@ var render = function() {
   var _c = _vm._self._c || _h
   return _c("div", { staticClass: "container" }, [
     _c("div", { staticClass: "row my-5" }, [
-      _c("div", { staticClass: "col-md-10" }, [
+      _c("div", { staticClass: "col-md-9" }, [
         _c("h4", [_vm._v("CNPJs Cadastrados")]),
         _vm._v(" "),
         _c(
@@ -42695,7 +42741,7 @@ var render = function() {
         )
       ]),
       _vm._v(" "),
-      _c("div", { staticClass: "col-md-2" }, [
+      _c("div", { staticClass: "col-md-3" }, [
         _c(
           "form",
           {
@@ -42720,7 +42766,11 @@ var render = function() {
                 }
               ],
               staticClass: "form-control",
-              attrs: { type: "text", placeholder: "Empresa", required: "" },
+              attrs: {
+                type: "text",
+                placeholder: "Razão social",
+                required: ""
+              },
               domProps: { value: _vm.cnpj.nome },
               on: {
                 input: function($event) {
@@ -42756,6 +42806,30 @@ var render = function() {
                     return
                   }
                   _vm.$set(_vm.cnpj, "cnpj", $event.target.value)
+                }
+              }
+            }),
+            _vm._v(" "),
+            _c("br"),
+            _vm._v(" "),
+            _c("input", {
+              directives: [
+                {
+                  name: "model",
+                  rawName: "v-model",
+                  value: _vm.cnpj.municipio,
+                  expression: "cnpj.municipio"
+                }
+              ],
+              staticClass: "form-control",
+              attrs: { type: "text", placeholder: "Município", required: "" },
+              domProps: { value: _vm.cnpj.municipio },
+              on: {
+                input: function($event) {
+                  if ($event.target.composing) {
+                    return
+                  }
+                  _vm.$set(_vm.cnpj, "municipio", $event.target.value)
                 }
               }
             }),
@@ -42807,7 +42881,7 @@ var staticRenderFns = [
     var _h = _vm.$createElement
     var _c = _vm._self._c || _h
     return _c("thead", [
-      _c("th", [_vm._v("Empresa")]),
+      _c("th", [_vm._v("Razão social")]),
       _vm._v(" "),
       _c("th", [_vm._v("CNPJ")]),
       _vm._v(" "),

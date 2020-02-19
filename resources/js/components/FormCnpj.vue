@@ -1,12 +1,12 @@
  <template>
   <div class="container">
     <div class="row my-5">
-      <div class="col-md-10">
+      <div class="col-md-9">
         <h4>CNPJs Cadastrados</h4>
 
         <table class="table table-hover">
           <thead>
-            <th>Empresa</th>
+            <th>Razão social</th>
             <th>CNPJ</th>
             <th>Municipio</th>
             <th></th>
@@ -28,7 +28,7 @@
         </table>
       </div>
 
-      <div class="col-md-2">
+      <div class="col-md-3">
         <form action @submit.prevent="save">
           <h4>Cadastrar Cnpj</h4>
           <!-- <b-button variant="success" @click="makeToast('success')" class="mb-2">Success</b-button> -->
@@ -36,7 +36,7 @@
           <input
             type="text"
             v-model="cnpj.nome"
-            placeholder="Empresa"
+            placeholder="Razão social"
             class="form-control"
             required
           />
@@ -45,6 +45,15 @@
             type="text"
             v-model="cnpj.cnpj"
             placeholder="Digite um CNPJ"
+            class="form-control"
+            required
+          />
+
+           <br />
+          <input
+            type="text"
+            v-model="cnpj.municipio"
+            placeholder="Município"
             class="form-control"
             required
           />
@@ -88,27 +97,28 @@ export default {
   },
   methods: {
     save() {
-      //salva e edita caso ja seja um registro existente
+      //salva se não estiver id e edita caso ja seja um registro existente
 
       if (!this.cnpj.id) {
         cnpjs.cadastrar(this.cnpj).then(response => {
           this.cnpj = {};
           this.list();
           this.alertaFlutuante("success");
-          // console.log('Cadastrado com sucesso');
+
         });
       } else {
         cnpjs.edit(this.cnpj).then(response => {
           this.cnpj = {};
           this.list();
-          alert("Atualizado com sucesso");
+          this.alertaFlutuante("primary");
+
         });
       }
     },
 
     list() {
       cnpjs.listDb(this.cnpj).then(response => {
-        this.cnpjs = response.data; //salva em data
+        this.cnpjs = response.data; //retorna os resultados do banco de dados e coloca na tabela
       });
     },
 
@@ -120,8 +130,9 @@ export default {
     destroy(cnpj) {
       if (confirm("Deseja Excluir mesmo esse registro?")) {
         cnpjs.destroy(cnpj).then(response => {
-          this.list();
-          console.log(this.cnpj);
+          this.alertaFlutuante("warning");
+          this.list(); //atualiza a lista de cadastros
+
         });
       }
     },
@@ -129,21 +140,54 @@ export default {
     search(cnpj) {
       cnpjs.buscar(this.cnpj).then(response => {
         this.cnpj = response.data;
-        console.log(this.cnpjTeste);
+        if ((this.cnpj = response.data.message == "CNPJ inválido")) {
+          this.alertaFlutuante("erro-cnpj");
+          this.cnpj = {};
+        } else {
+          this.alertaFlutuante("cnpj-valido");
+          this.cnpj = response.data;
+        }
       });
     },
 
-    alertaFlutuante(variant = null) { //começa a variavel como vazia
-      if (variant == "success") {  //compara os parametros passados
+    alertaFlutuante(variant = null) {   //Verifica o parametro e assim sua correspondente mensagem
+      //começa a variavel como vazia
+      if (variant == "success") {
+        //compara os parametros passados
         this.$bvToast.toast("Cadastrado com sucesso", {
           title: `CNPJ Cadastrado`,
           variant: variant,
           solid: true
         });
-      }
-      else if (variant == "danger") {
+      } else if (variant == "danger") {
         this.$bvToast.toast("Erro ao cadastrar", {
           title: "Erro no CNPJ",
+          variant: variant,
+          solid: true
+        });
+      } else if (variant == "warning") {
+        this.$bvToast.toast("Cadastro excluido com sucesso", {
+          title: "CNPJ excluido da base de dados",
+          variant: variant,
+          solid: true
+        });
+      } else if (variant == "primary") {
+        this.$bvToast.toast("Cadastro atualizado com sucesso", {
+          title: "Dados atualizados",
+          variant: variant,
+          solid: true
+        });
+      } else if (variant == "erro-cnpj") {
+        variant = "danger";
+        this.$bvToast.toast("Cnpj inválido", {
+          title: "Dados incorretos ou inválidos",
+          variant: variant,
+          solid: true
+        });
+      } else if (variant == "cnpj-valido") {
+        variant = "info";
+        this.$bvToast.toast("Cnpj válido", {
+          title: "Cnpj encontrado e cadastrado na receita",
           variant: variant,
           solid: true
         });
@@ -152,6 +196,7 @@ export default {
   },
   mounted() {
     this.list();
+    console.log(cnpjs)
   }
 };
 </script>
